@@ -1,0 +1,12 @@
+{
+  "name": "m8",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean",
+    "web": "pnpm --filter @m8/web",
+    "api": "pnpm --filter @m8/api"
+  }
+}
