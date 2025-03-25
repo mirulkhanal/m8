@@ -1,9 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
+import { useFriendStore } from '../store/useFriendStore';
 import { Link } from 'react-router-dom';
-import { Handshake, LogOut, MessageSquare, Settings, User, Users } from 'lucide-react';
+import {
+  Handshake,
+  LogOut,
+  Settings,
+  User,
+  Users,
+  ListTodo,
+} from 'lucide-react';
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const { friendRequests, loadFriendRequests } = useFriendStore();
+
+  useEffect(() => {
+    if (authUser) {
+      loadFriendRequests();
+    }
+  }, [authUser, loadFriendRequests]);
   return (
     <header className='bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 backdrop-blue-lg bg-base-100/80'>
       <div className='container mx-auto px-4 h-16'>
@@ -19,21 +34,30 @@ const Navbar = () => {
             </Link>
           </div>
           <div className='flex items-center gap-2'>
-            <Link
-              to={'/settings'}
-              className='btn btn-sm gap-2 transition-colors'>
-              <Settings className='size-4' />
-              <span className='hidden sm:inline'>Settings</span>
-            </Link>
             {authUser && (
               <>
-                <Link to='/friends' className='btn btn-sm gap-2'>
+                <Link to='/' className='btn btn-sm gap-2'>
+                  <ListTodo className='size-5' />
+                  <span className='hidden sm:inline'>Lists</span>
+                </Link>
+                <Link to='/friends' className='btn btn-sm gap-2 relative'>
                   <Users className='size-5' />
                   <span className='hidden sm:inline'>Friends</span>
+                  {friendRequests.length > 0 && (
+                    <div className='absolute -top-2 -right-2 bg-primary text-primary-content rounded-full size-5 flex items-center justify-center text-xs font-bold'>
+                      {friendRequests.length}
+                    </div>
+                  )}
                 </Link>
                 <Link to='/profile' className='btn btn-sm gap-2'>
                   <User className='size-5' />
                   <span className='hidden sm:inline'>Profile</span>
+                </Link>
+                <Link
+                  to={'/settings'}
+                  className='btn btn-sm gap-2 transition-colors'>
+                  <Settings className='size-4' />
+                  <span className='hidden sm:inline'>Settings</span>
                 </Link>
                 <button className='flex gap-2 items-center' onClick={logout}>
                   <LogOut className='size-5' />

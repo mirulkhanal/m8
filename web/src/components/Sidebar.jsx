@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useListStore } from '../store/useListStore';
 import SidebarSkeleton from './skeletons/SidebarSkeleton';
-import { Users } from 'lucide-react';
+import { ListTodo, Users } from 'lucide-react';
 import Modal from './Modal';
 
 const Sidebar = () => {
@@ -31,7 +31,9 @@ const Sidebar = () => {
           </div>
         </div>
         <h3 className='text-xl font-bold'>No Lists Found</h3>
-        <p className='text-base-content/70'>Create your first list to get started</p>
+        <p className='text-base-content/70'>
+          Create your first list to get started
+        </p>
         <button
           className='btn btn-primary gap-2'
           onClick={() => setShowModal(true)}>
@@ -42,40 +44,36 @@ const Sidebar = () => {
   );
 
   return (
-    <aside className='h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200'>
+    <aside className='h-full w-72 flex-shrink-0 border-r border-base-300 flex flex-col'>
       <div className='border-b border-base-300 w-full p-5'>
         <div className='flex items-center gap-2'>
-          <Users className='size-6' />
-          <span className='font-medium hidden lg:block'>Group Members</span>
-        </div>
-        <div className='mt-3 hidden lg:flex items-center gap-2'>
           <button
-            className='btn btn-sm w-full bg-blue-500 text-white hover:bg-blue-600'
-            onClick={() => setShowModal(true)}>
-            Create List
+            onClick={() => setShowModal(true)}
+            className='btn btn-sm gap-2 text-primary hover:bg-primary hover:text-primary-content transition-colors w-full'>
+            <ListTodo className='size-5' />
+            <span>Create List</span>
           </button>
         </div>
       </div>
 
-      <div className='overflow-y-auto w-full py-3'>
+      <div className='overflow-y-auto flex-1 py-3 space-y-2 px-2'>
         {lists.map((list) => (
           <button
             key={list.id}
             onClick={() => selectList(list)}
-            className={`w-full p-3 flex items-center gap-3 transition-colors rounded-lg ${
+            className={`w-full p-3 flex items-center gap-3 transition-colors rounded-lg animate-fade-in border ${
               selectedList?.id === list.id
-                ? 'bg-base-300 ring-2 ring-primary ring-inset' // Added ring-inset
-                : 'hover:bg-base-300'
+                ? 'bg-base-200 border-primary shadow-lg'
+                : 'hover:bg-base-200 border-base-300'
             }`}>
-            {/* FIXME: Need to update this to something relevant */}
-            {/* <div className='relative mx-auto lg:mx-0'>
+            <div className='relative'>
               <img
-                src='/avatar.png'
+                src={`https://robohash.org/${list.id}.png`}
                 alt={list.name}
-                className='size-12 object-cover rounded-full'
+                className='size-12 object-cover rounded-full bg-base-100 p-1 ring-1 ring-primary'
               />
-            </div> */}
-            <div className='hidden lg:block text-left min-w-0'>
+            </div>
+            <div className='text-left min-w-0 flex-1'>
               <div className='font-medium truncate'>{list.name}</div>
             </div>
           </button>

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useListStore } from '../store/useListStore';
-import { Plus, List } from 'lucide-react';
+import { List } from 'lucide-react';
+import ListItemForm from './ListItemForm';
 
 const ListView = () => {
   const { authUser } = useAuthStore();
@@ -12,7 +13,6 @@ const ListView = () => {
     connectToList,
     disconnectFromList,
   } = useListStore();
-  const [itemContent, setItemContent] = useState('');
   const messageEndRef = useRef(null);
 
   // Handle socket connection when list is selected
@@ -41,30 +41,17 @@ const ListView = () => {
     }
   }, [selectedListItems]);
 
-  const handleAddItem = () => {
-    if (itemContent.trim()) {
-      addItem(itemContent);
-      setItemContent('');
-    }
-  };
-
   return (
-    <div className='flex flex-col h-full bg-base-100 w-full'>
-      {' '}
-      {/* Add w-full here */}
+    <div className='flex-1 flex flex-col h-full bg-base-100'>
       {/* List Header */}
-      <div className='p-6 border-b border-base-300 w-full'>
-        {' '}
-        {/* Add w-full here */}
+      <div className='p-6 border-b border-base-300'>
         <div className='flex items-center gap-3'>
           <List className='w-6 h-6' />
           <h1 className='text-2xl font-bold'>{selectedList?.name}</h1>
         </div>
       </div>
       {/* List Content */}
-      <div className='flex-1 overflow-y-auto p-6 w-full'>
-        {' '}
-        {/* Add w-full here */}
+      <div className='flex-1 overflow-y-auto p-6'>
         {selectedListItems.length > 0 ? (
           <div className='space-y-4'>
             {selectedListItems.map((item) => (
@@ -90,27 +77,7 @@ const ListView = () => {
         )}
         <div ref={messageEndRef} />
       </div>
-      {/* Add Item Form */}
-      <div className='sticky bottom-0 p-4 bg-base-100 border-t border-base-300 w-full'>
-        {' '}
-        {/* Add w-full here */}
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            value={itemContent}
-            onChange={(e) => setItemContent(e.target.value)}
-            placeholder='Add new item...'
-            className='input input-bordered flex-1 transition-all duration-300 ease-in-out focus:ring-2 focus:ring-primary'
-            onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
-          />
-          <button
-            onClick={handleAddItem}
-            className='btn btn-primary gap-2 transition-all duration-300 ease-in-out hover:scale-105'>
-            <Plus className='w-4 h-4' />
-            Add
-          </button>
-        </div>
-      </div>
+      <ListItemForm />
     </div>
   );
 };
