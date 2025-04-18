@@ -104,4 +104,12 @@ export const useFriendStore = create((set) => ({
   clearSearch: () => {
     set({ searchResults: [] });
   },
+  
+  // Update the handleFriendRequest method to properly update the state
+  handleFriendRequest: (request) => {
+    set((state) => ({
+      friendRequests: [...state.friendRequests, request]
+    }));
+    toast.success(`New friend request from ${request.fullName || request.email || 'someone'}`);
+  },
 }));

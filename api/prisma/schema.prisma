@@ -35,9 +35,11 @@ model List {
 
 model Item {
   id        String   @id @default(uuid())
-  content   String
+  content   String   // Will store the item name/description
   listId    String
   list      List     @relation("ListItems", fields: [listId], references: [id])
+  metadata  Json?    // Flexible field for type-specific data (e.g., quantity, unit for groceries)
+  completed Boolean  @default(false) // Tracks completion status
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

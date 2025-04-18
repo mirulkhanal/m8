@@ -1,6 +1,7 @@
 import { asyncHandler } from '../lib/errors/asyncHandler.js';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../lib/errors/AppError.js';
+import { userNamespace } from '../lib/socket.js'; // Add this import
 
 export const sendFriendRequest = asyncHandler(async (req, res) => {
   const { userId } = req.body;
@@ -20,6 +21,13 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
     data: {
       friendRequests: { push: currentUserId },
     },
+  });
+  
+  // Emit socket event to notify the recipient
+  userNamespace.to(`user:${userId}`).emit('friendRequestReceived', {
+    id: currentUserId,
+    fullName: req.user.fullName,
+    avatar: req.user.avatar
   });
 
   res.status(200).json({

@@ -7,8 +7,10 @@ import {
   getListMembers,
   fetchListForAuthUser,
   getListItems,
-  getGroupInvites, // Add new import
+  getGroupInvites,
   acceptInvite,
+  toggleItemCompletion,
+  removeMemberFromList, // Add this import
 } from '../controllers/list.controller.js';
 
 const api = express.Router();
@@ -21,5 +23,7 @@ api.get('/:listId/members', verifyAuth, getListMembers);
 api.get('/:listId/items', verifyAuth, getListItems);
 api.get('/invites', verifyAuth, getGroupInvites);
 api.post('/accept-invite', verifyAuth, acceptInvite);
+api.patch('/item/:itemId/toggle', verifyAuth, toggleItemCompletion);
+api.post('/remove-member', verifyAuth, removeMemberFromList); // Add this route
 
 export default api;

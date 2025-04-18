@@ -12,14 +12,30 @@ import { useAuthStore } from './store/useAuthStore.js';
 import { Loader } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useThemeStore } from './store/useThemeStore.js';
+import { useSocketStore } from './store/useSocketStore';
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
   const { theme } = useThemeStore();
+  const { initUserSocket, disconnectSockets } = useSocketStore();
+  
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-
+  
+  // Initialize socket when user is authenticated
+  useEffect(() => {
+    if (authUser) {
+      initUserSocket(authUser.id);
+    } else {
+      disconnectSockets();
+    }
+    
+    return () => {
+      disconnectSockets();
+    };
+  }, [authUser, initUserSocket, disconnectSockets]);
+  
   if (isCheckingAuth && !authUser) {
     return (
       <div className='flex items-center justify-center h-screen'>

@@ -10,15 +10,24 @@ import {
   Users,
   ListTodo,
 } from 'lucide-react';
+import { useListStore } from '../store/useListStore';
 const Navbar = () => {
-  const { logout, authUser } = useAuthStore();
+  const { authUser, logout } = useAuthStore();
   const { friendRequests, loadFriendRequests } = useFriendStore();
+  const { listInvites, loadListInvites } = useListStore();
 
+  // Load notifications data when navbar mounts
   useEffect(() => {
     if (authUser) {
       loadFriendRequests();
+      loadListInvites();
     }
-  }, [authUser, loadFriendRequests]);
+  }, [authUser, loadFriendRequests, loadListInvites]);
+
+  // Calculate total notifications
+  const totalNotifications =
+    (friendRequests?.length || 0) + (listInvites?.length || 0);
+
   return (
     <header className='bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 backdrop-blue-lg bg-base-100/80'>
       <div className='container mx-auto px-4 h-16'>
@@ -43,15 +52,20 @@ const Navbar = () => {
                 <Link to='/friends' className='btn btn-sm gap-2 relative'>
                   <Users className='size-5' />
                   <span className='hidden sm:inline'>Friends</span>
-                  {friendRequests.length > 0 && (
+                  {friendRequests?.length > 0 && (
                     <div className='absolute -top-2 -right-2 bg-primary text-primary-content rounded-full size-5 flex items-center justify-center text-xs font-bold'>
                       {friendRequests.length}
                     </div>
                   )}
                 </Link>
-                <Link to='/list-invites' className='btn btn-sm gap-2'>
+                <Link to='/list-invites' className='btn btn-sm gap-2 relative'>
                   <ListTodo className='size-5' />
                   <span className='hidden sm:inline'>Invites</span>
+                  {listInvites?.length > 0 && (
+                    <div className='absolute -top-2 -right-2 bg-primary text-primary-content rounded-full size-5 flex items-center justify-center text-xs font-bold'>
+                      {listInvites.length}
+                    </div>
+                  )}
                 </Link>
                 <Link to='/profile' className='btn btn-sm gap-2'>
                   <User className='size-5' />

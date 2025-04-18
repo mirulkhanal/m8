@@ -36,6 +36,16 @@ export const signup = asyncHandler(async (req, res) => {
   });
 });
 
+// This function is missing in your controller but is referenced in routes
+export const checkAuth = asyncHandler(async (req, res) => {
+  // req.user is already set by verifyAuth middleware
+  return res.status(200).json({
+    status: 'success',
+    user: req.user,
+  });
+});
+
+// Fix the login response to include user data
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -57,10 +67,20 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken(existingUser.id, res);
+
+  // Return user data along with token
   return res.status(200).json({
     status: 'success',
     message: 'Successfully logged in',
     token,
+    user: {
+      id: existingUser.id,
+      email: existingUser.email,
+      fullName: existingUser.fullName,
+      avatar: existingUser.avatar,
+      createdAt: existingUser.createdAt,
+      updatedAt: existingUser.updatedAt,
+    },
   });
 });
 
@@ -117,11 +137,4 @@ export const updateProfile = asyncHandler(async (req, res) => {
       user: updatedUser,
     },
   });
-});
-
-export const checkAuth = asyncHandler(async (req, res, next) => {
-  if (!req.cookies.jwt || !req.user) {
-    throw new AppError('Invalid Authentication Session', 401);
-  }
-  return res.status(200).send(req.user);
 });

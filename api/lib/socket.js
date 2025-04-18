@@ -17,6 +17,7 @@ const io = new Server(server, {
 
 // Create a namespace for list collaboration
 const listNamespace = io.of('/list');
+const userNamespace = io.of('/user'); // Add user namespace for friend-related events
 
 // Socket.IO connection handler for list namespace
 listNamespace.on('connection', (socket) => {
@@ -60,4 +61,25 @@ listNamespace.on('connection', (socket) => {
   });
 });
 
-export { app, server, io };
+// Socket.IO connection handler for user namespace
+userNamespace.on('connection', (socket) => {
+  console.log(`New user socket connection: ${socket.id}`);
+  
+  // Join user's personal room
+  socket.on('joinUserRoom', (userId) => {
+    if (!userId) {
+      socket.emit('error', 'User ID is required');
+      return;
+    }
+    
+    socket.join(`user:${userId}`);
+    socket.emit('joinedUserRoom', userId);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`User socket disconnected: ${socket.id}`);
+  });
+});
+
+// Export io for use in controllers
+export { app, server, io, listNamespace, userNamespace };
