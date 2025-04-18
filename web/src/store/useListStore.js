@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { api } from '../lib/axios';
+import { io } from 'socket.io-client';
+
+// Create a singleton socket instance
+let socket;
 
 export const useListStore = create((set, get) => ({
   lists: [],
@@ -12,6 +16,38 @@ export const useListStore = create((set, get) => ({
   selectedListMembers: [],
   isSelectedListMembersLoading: false,
 
+  // Add socket initialization function
+  // In the initSocket function
+  initSocket: (userId) => {
+    if (!socket) {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5009';
+      socket = io(`${baseUrl}/list`, { withCredentials: true });
+
+      // Set up global socket event listeners
+      socket.on('itemAdded', ({ listId, item }) => {
+        const { selectedList, selectedListItems } = get();
+        if (selectedList && selectedList.id === listId) {
+          // Check if the item already exists to prevent duplicates
+          const itemExists = selectedListItems.some(
+            (existingItem) => existingItem.id === item.id
+          );
+          if (!itemExists) {
+            set({ selectedListItems: [...selectedListItems, item] });
+          }
+        }
+      });
+    }
+
+    return socket;
+  },
+
+  joinListRoom: (listId, userId) => {
+    const socket = get().initSocket(userId);
+    if (socket && listId) {
+      socket.emit('joinList', { listId, userId });
+    }
+  },
+
   handleListInvite: (invite) => {
     set((state) => ({
       listInvites: [...state.listInvites, invite],
@@ -22,12 +58,12 @@ export const useListStore = create((set, get) => ({
   loadListInvites: async () => {
     try {
       const res = await api.get('/list/invites');
-      const invites = res.data.data.map(list => ({
+      const invites = res.data.data.map((list) => ({
         listId: list.id,
         listName: list.name,
         inviterId: list.owner.id,
         inviterName: list.owner.fullName,
-        inviterAvatar: list.owner.avatar
+        inviterAvatar: list.owner.avatar,
       }));
       set({ listInvites: invites });
     } catch (error) {
@@ -79,9 +115,9 @@ export const useListStore = create((set, get) => ({
       });
       const newItem = res.data.data;
 
-      set((state) => ({
-        selectedListItems: [...state.selectedListItems, newItem],
-      }));
+      // We'll let the socket event handle the UI update for consistency
+      // This prevents the duplicate item issue
+      // The local user will receive the update through the same socket channel
 
       toast.success('Item added successfully');
     } catch (error) {

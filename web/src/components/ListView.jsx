@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { useListStore } from '../store/useListStore';
 import { List, Plus, Users } from 'lucide-react';
 import ListItemForm from './ListItemForm';
+import { useAuthStore } from '../store/useAuthStore';
 
 const ListView = ({ setShowMembersSidebar }) => {
-  const { selectedList, selectedListItems } = useListStore();
+  const { selectedList, selectedListItems, joinListRoom } = useListStore();
+  const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
 
   // Auto-scroll to bottom when new items are added
@@ -13,6 +15,14 @@ const ListView = ({ setShowMembersSidebar }) => {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [selectedListItems]);
+
+  // Handle socket connection and room joining
+  useEffect(() => {
+    if (!selectedList || !authUser) return;
+
+    // Join the list room via the store
+    joinListRoom(selectedList.id, authUser.id);
+  }, [selectedList, authUser, joinListRoom]);
 
   return (
     <div className='flex-1 flex flex-col h-full bg-base-100'>

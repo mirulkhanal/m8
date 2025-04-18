@@ -1,6 +1,7 @@
 import { asyncHandler } from '../lib/errors/asyncHandler.js';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../lib/errors/AppError.js';
+import { io } from '../lib/socket.js';
 
 export const createList = asyncHandler(async (req, res) => {
   const { name } = req.body;
@@ -72,6 +73,9 @@ export const addItem = asyncHandler(async (req, res) => {
       listId,
     },
   });
+
+  // Emit socket event to all clients in the list room
+  io.of('/list').to(listId).emit('itemAdded', { listId, item: newItem });
 
   res.status(201).json({
     status: 'success',
