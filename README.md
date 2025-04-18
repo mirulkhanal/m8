@@ -6,12 +6,14 @@ A modern collaborative platform built with a React + Vite frontend and a Node.js
 
 ## Project Structure
 
+```
 m8/
 ├── api/ # Backend (Node.js, Express, Prisma, PostgreSQL)
 ├── web/ # Frontend (React, Vite, Zustand, TailwindCSS)
 ├── package.json
 ├── pnpm-workspace.yaml
 └── README.md
+```
 
 ---
 
@@ -147,11 +149,3 @@ This project is licensed under the MIT License.
 - [Prisma](https://www.prisma.io/)
 - [TailwindCSS](https://tailwindcss.com/)
 - [Socket.IO](https://socket.io/)
-
-```
-
-```
-
-```
-
-```
