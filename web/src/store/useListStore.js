@@ -1,17 +1,52 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import { api } from '../lib/axios';
-import { io } from 'socket.io-client';
 
 export const useListStore = create((set, get) => ({
   lists: [],
-  socket: null,
+  listInvites: [],
   selectedList: null,
   selectedListItems: [],
-  selectedListMembers: [],
-  isSelectedListMembersLoading: false,
   isListsLoading: false,
   isItemsLoading: false,
+  selectedListMembers: [],
+  isSelectedListMembersLoading: false,
+
+  handleListInvite: (invite) => {
+    set((state) => ({
+      listInvites: [...state.listInvites, invite],
+    }));
+    toast.success(`You've been invited to list ${invite.listName}`);
+  },
+
+  loadListInvites: async () => {
+    try {
+      const res = await api.get('/list/invites');
+      const invites = res.data.data.map(list => ({
+        listId: list.id,
+        listName: list.name,
+        inviterId: list.owner.id,
+        inviterName: list.owner.fullName,
+        inviterAvatar: list.owner.avatar
+      }));
+      set({ listInvites: invites });
+    } catch (error) {
+      toast.error('Failed to load list invitations');
+    }
+  },
+  acceptListInvite: async (listId) => {
+    try {
+      await api.post('/list/accept-invite', { listId });
+      set((state) => ({
+        listInvites: state.listInvites.filter(
+          (invite) => invite.listId !== listId
+        ),
+      }));
+      toast.success('List invitation accepted');
+    } catch (error) {
+      toast.error('Failed to accept list invitation');
+    }
+  },
 
   createList: async (name) => {
     try {
@@ -35,36 +70,8 @@ export const useListStore = create((set, get) => ({
     }
   },
 
-  inviteToList: async (listId, userId) => {
-    try {
-      await api.post('/list/invite', { listId, userId });
-      toast.success('User invited successfully');
-    } catch (error) {
-      toast.error(error.response.data.message);
-    }
-  },
-
-  // Initialize socket connection when a list is selected
-  connectToList: (listId, userId) => {
-    const socket = io('http://localhost:5009', {
-      query: { listId, userId },
-    });
-    set({ socket });
-    return socket;
-  },
-
-  // Disconnect socket when leaving a list
-  disconnectFromList: () => {
-    const { socket } = get();
-    if (socket) {
-      socket.disconnect();
-      set({ socket: null });
-    }
-  },
-
-  // Add item and emit socket event
   addItem: async (content) => {
-    const { selectedList, socket } = get();
+    const { selectedList } = get();
     try {
       const res = await api.post('/list/add-item', {
         listId: selectedList.id,
@@ -72,18 +79,9 @@ export const useListStore = create((set, get) => ({
       });
       const newItem = res.data.data;
 
-      // Update local state
       set((state) => ({
         selectedListItems: [...state.selectedListItems, newItem],
       }));
-
-      // Emit socket event to notify other members
-      if (socket) {
-        socket.emit('new_item', {
-          listId: selectedList.id,
-          item: newItem,
-        });
-      }
 
       toast.success('Item added successfully');
     } catch (error) {
@@ -102,19 +100,45 @@ export const useListStore = create((set, get) => ({
 
     return;
   },
+
+  loadListMembers: async (listId) => {
+    const { selectedList } = get();
+    const id = listId || selectedList.id;
+    set({ isSelectedListMembersLoading: true });
+    try {
+      const res = await api.get(`/list/${id}/members`);
+      set({ selectedListMembers: res.data });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch members');
+    } finally {
+      set({ isSelectedListMembersLoading: false });
+    }
+  },
+
   listMembers: async () => {
     const { selectedList } = get();
     set({ isSelectedListMembersLoading: true });
     try {
-      const res = await api.get(`/${selectedList.id}/members`);
-
-      console.log('Selected List Members fetched: ', res.data);
+      const res = await api.get(`/list/${selectedList.id}/members`);
       set({ selectedListMembers: res.data });
-      toast.success('Item added successfully');
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || 'Failed to fetch members');
     } finally {
       set({ isSelectedListMembersLoading: false });
+    }
+  },
+
+  inviteMember: async (userId) => {
+    const { selectedList } = get();
+    try {
+      await api.post('/list/invite', {
+        listId: selectedList.id,
+        userId,
+      });
+      await get().listMembers();
+      toast.success('Member invited successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to invite member');
     }
   },
 }));

@@ -1,7 +1,6 @@
 import { asyncHandler } from '../lib/errors/asyncHandler.js';
 import prisma from '../lib/prisma.js';
 import { AppError } from '../lib/errors/AppError.js';
-import { io } from '../lib/socket.js';
 
 export const createList = asyncHandler(async (req, res) => {
   const { name } = req.body;
@@ -28,25 +27,39 @@ export const createList = asyncHandler(async (req, res) => {
 
 export const inviteToList = asyncHandler(async (req, res) => {
   const { listId, userId } = req.body;
+  const currentUserId = req.user.id;
 
+  // Verify list exists and current user is the owner
   const list = await prisma.list.findUnique({ where: { id: listId } });
   if (!list) {
     throw new AppError('List not found', 404);
   }
+  if (list.ownerId !== currentUserId) {
+    throw new AppError('Only list owner can invite members', 403);
+  }
 
-  // Add user to list members
-  await prisma.list.update({
-    where: { id: listId },
+  // Verify friendship exists between inviter and invitee
+  const inviter = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { friends: true },
+  });
+  if (!inviter.friends.includes(userId)) {
+    throw new AppError('You can only invite friends to your list', 403);
+  }
+
+  // Update invitee's groupInvites array
+  await prisma.user.update({
+    where: { id: userId },
     data: {
-      members: {
-        push: userId,
+      groupInvites: {
+        push: listId,
       },
     },
   });
 
   res.status(200).json({
     status: 'success',
-    message: 'User invited successfully',
+    message: 'Invitation sent successfully',
   });
 });
 
@@ -59,9 +72,6 @@ export const addItem = asyncHandler(async (req, res) => {
       listId,
     },
   });
-
-  //FIXME: Emit real-time update to all list members
-  io.to(listId).emit('itemAdded', newItem);
 
   res.status(201).json({
     status: 'success',
@@ -145,5 +155,78 @@ export const getListItems = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: 'success',
     data: items,
+  });
+});
+
+export const getGroupInvites = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // Get user's group invites
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      groupInvites: true
+    }
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  // Get detailed information about each invited list
+  const invites = await prisma.list.findMany({
+    where: { id: { in: user.groupInvites } },
+    include: {
+      owner: {
+        select: {
+          id: true,
+          fullName: true,
+          avatar: true
+        }
+      }
+    }
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: invites
+  });
+});
+
+export const acceptInvite = asyncHandler(async (req, res) => {
+  const { listId } = req.body;
+  const userId = req.user.id;
+
+  // Verify the invitation exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { groupInvites: true },
+  });
+
+  if (!user || !user.groupInvites.includes(listId)) {
+    throw new AppError('Invitation not found', 404);
+  }
+
+  // Add user to the list members and remove the invitation
+  await prisma.$transaction([
+    prisma.list.update({
+      where: { id: listId },
+      data: {
+        members: { push: userId },
+      },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        groupInvites: {
+          set: user.groupInvites.filter((id) => id !== listId),
+        },
+      },
+    }),
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Invitation accepted successfully',
   });
 });

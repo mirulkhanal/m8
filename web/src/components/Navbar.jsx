@@ -49,6 +49,10 @@ const Navbar = () => {
                     </div>
                   )}
                 </Link>
+                <Link to='/list-invites' className='btn btn-sm gap-2'>
+                  <ListTodo className='size-5' />
+                  <span className='hidden sm:inline'>Invites</span>
+                </Link>
                 <Link to='/profile' className='btn btn-sm gap-2'>
                   <User className='size-5' />
                   <span className='hidden sm:inline'>Profile</span>

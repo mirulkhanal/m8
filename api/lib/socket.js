@@ -1,67 +1,63 @@
-import { Server } from 'socket.io';
-import http from 'http';
 import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import prisma from './prisma.js';
 
 const app = express();
 const server = http.createServer(app);
 
+// Create Socket.IO server instance
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173'],
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-export function getReceiverSocketId(userId) {
-  return userSocketMap[userId];
-}
+// Create a namespace for list collaboration
+const listNamespace = io.of('/list');
 
-// used to store online users
-const userSocketMap = {}; // {userId: socketId}
+// Socket.IO connection handler for list namespace
+listNamespace.on('connection', (socket) => {
+  console.log(`New socket connection: ${socket.id}`);
 
-io.on('connection', (socket) => {
-  console.log('A user connected', socket.id);
+  // Event handler for joining a specific list room
+  socket.on('joinList', async ({ listId, userId }) => {
+    if (!listId || !userId) {
+      socket.emit('error', 'Both List ID and User ID are required');
+      socket.disconnect();
+      return;
+    }
 
-  const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+    try {
+      const list = await prisma.list.findUnique({
+        where: { id: listId },
+        select: { members: true },
+      });
 
-  // io.emit() is used to send events to all the connected clients
-  io.emit('getOnlineUsers', Object.keys(userSocketMap));
+      if (!list || !list.members.includes(userId)) {
+        socket.emit('error', 'Unauthorized access to list');
+        socket.disconnect();
+        return;
+      }
 
-  // Join a specific list room
-  socket.on('joinList', (listId) => {
-    socket.join(listId);
-    console.log(`User ${userId} joined list ${listId}`);
+      // Join the room named after the listId
+      socket.join(listId);
+      console.log(`Socket ${socket.id} joined list room ${listId}`);
+
+      // Notify the client they've successfully joined
+      socket.emit('joinedList', listId);
+    } catch (error) {
+      socket.emit('error', 'Error validating list membership');
+      socket.disconnect();
+    }
   });
 
-  // Add the item and send it to everyone in the list room
-  socket.on('list:add', (listId, item) => {
-    io.to(listId).emit('list', {
-      type: 'ADD',
-      data: item,
-    });
-  });
-
-  // Remove the item and send the id to everyone in the list room
-  socket.on('list:remove', (listId, id) => {
-    io.to(listId).emit('list', {
-      type: 'REMOVE',
-      ids: id,
-    });
-  });
-
-  // Toggle the item and send it to everyone in the list room
-  socket.on('list:toggle', (listId, id) => {
-    io.to(listId).emit('list', {
-      type: 'UPDATE',
-      ids: id,
-    });
-  });
-
+  // Clean up when a socket disconnects
   socket.on('disconnect', () => {
-    console.log('A user disconnected', socket.id);
-    delete userSocketMap[userId];
-    io.emit('getOnlineUsers', Object.keys(userSocketMap));
+    console.log(`Socket disconnected: ${socket.id}`);
   });
 });
 
-export { io, app, server };
+export { app, server, io };

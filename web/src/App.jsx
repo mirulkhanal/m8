@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Settings from './pages/Settings.jsx';
 import Friends from './pages/Friends.jsx';
+import ListInvites from './pages/ListInvites.jsx';
 import Navbar from './components/Navbar.jsx';
 import { useAuthStore } from './store/useAuthStore.js';
 import { Loader } from 'lucide-react';
@@ -53,6 +54,10 @@ function App() {
         <Route
           path='/settings'
           element={authUser ? <Settings /> : <Navigate to={'/login'} />}
+        />
+        <Route
+          path='/list-invites'
+          element={authUser ? <ListInvites /> : <Navigate to={'/login'} />}
         />
       </Routes>
       <Toaster />

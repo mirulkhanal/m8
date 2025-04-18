@@ -1,38 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { useAuthStore } from '../store/useAuthStore';
 import { useListStore } from '../store/useListStore';
-import { List } from 'lucide-react';
+import { List, Plus, Users } from 'lucide-react';
 import ListItemForm from './ListItemForm';
 
-const ListView = () => {
-  const { authUser } = useAuthStore();
-  const {
-    selectedList,
-    selectedListItems,
-    addItem,
-    connectToList,
-    disconnectFromList,
-  } = useListStore();
+const ListView = ({ setShowMembersSidebar }) => {
+  const { selectedList, selectedListItems } = useListStore();
   const messageEndRef = useRef(null);
-
-  // Handle socket connection when list is selected
-  useEffect(() => {
-    if (selectedList) {
-      const socket = connectToList(selectedList.id, authUser.id);
-
-      // Listen for new items
-      socket.on('new_item', (item) => {
-        set((state) => ({
-          selectedListItems: [...state.selectedListItems, item],
-        }));
-      });
-
-      // Cleanup on unmount
-      return () => {
-        disconnectFromList();
-      };
-    }
-  }, [selectedList, authUser.id, connectToList, disconnectFromList]);
 
   // Auto-scroll to bottom when new items are added
   useEffect(() => {
@@ -45,9 +18,17 @@ const ListView = () => {
     <div className='flex-1 flex flex-col h-full bg-base-100'>
       {/* List Header */}
       <div className='p-6 border-b border-base-300'>
-        <div className='flex items-center gap-3'>
-          <List className='w-6 h-6' />
-          <h1 className='text-2xl font-bold'>{selectedList?.name}</h1>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <List className='w-6 h-6' />
+            <h1 className='text-2xl font-bold'>{selectedList?.name}</h1>
+          </div>
+          <button
+            onClick={() => setShowMembersSidebar(true)}
+            className='btn btn-ghost btn-sm gap-2'>
+            <Users className='w-5 h-5' />
+            <span>Members</span>
+          </button>
         </div>
       </div>
       {/* List Content */}

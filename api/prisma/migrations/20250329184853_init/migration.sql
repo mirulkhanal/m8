@@ -7,6 +7,10 @@ CREATE TABLE "User" (
     "avatar" TEXT NOT NULL DEFAULT '',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "friendRequests" TEXT[],
+    "groupInvites" TEXT[],
+    "friends" TEXT[],
+    "blockedUsers" TEXT[],
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );

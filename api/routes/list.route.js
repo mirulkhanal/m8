@@ -6,7 +6,9 @@ import {
   addItem,
   getListMembers,
   fetchListForAuthUser,
-  getListItems, // Add new import
+  getListItems,
+  getGroupInvites, // Add new import
+  acceptInvite,
 } from '../controllers/list.controller.js';
 
 const api = express.Router();
@@ -16,6 +18,8 @@ api.post('/create', verifyAuth, createList);
 api.post('/invite', verifyAuth, inviteToList);
 api.post('/add-item', verifyAuth, addItem);
 api.get('/:listId/members', verifyAuth, getListMembers);
-api.get('/:listId/items', verifyAuth, getListItems); // Add new route
+api.get('/:listId/items', verifyAuth, getListItems);
+api.get('/invites', verifyAuth, getGroupInvites);
+api.post('/accept-invite', verifyAuth, acceptInvite);
 
 export default api;

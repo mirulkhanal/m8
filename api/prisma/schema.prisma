@@ -6,24 +6,27 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  fullName  String
-  password  String
-  avatar    String     @default("")
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique
+  fullName       String
+  password       String
+  avatar         String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   friendRequests String[]
-  groupInvites String[]
-  friends String[]
-  blockedUsers String[]
+  groupInvites   String[]
+  friends        String[]
+  blockedUsers   String[]
+  ownedLists     List[]   @relation("OwnedLists") 
 }
 
 model List {
   id        String   @id @default(uuid())
   name      String
   ownerId   String
+  owner     User     @relation("OwnedLists", fields: [ownerId], references: [id])
   members   String[]
   items     Item[]   @relation("ListItems")
   createdAt DateTime @default(now())
